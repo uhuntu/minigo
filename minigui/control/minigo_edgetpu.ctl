@@ -1,7 +1,7 @@
 board_size = 19
 
 players = {
-  "minigo_edgetpu" : Player("python"
+  "minigo_edgetpu" : Player("python3"
                             " -u"
                             " gtp.py"
                             " --load_file=saved_models/v17-2019-04-29-edgetpu.tflite"
