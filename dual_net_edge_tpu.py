@@ -18,10 +18,14 @@ compiled model file.
 For more information see https://coral.withgoogle.com
 """
 
-import numpy as np
+from pycoral.utils.edgetpu import make_interpreter
+from pycoral.utils.edgetpu import run_inference
+from pycoral.adapters import common
+
 import features as features_lib
 import go
-from edgetpu.basic.basic_engine import BasicEngine  # pylint: disable=import-error
+
+# pylint: disable=missing-function-docstring
 
 
 def extract_agz_features(position):
@@ -32,28 +36,14 @@ class DualNetworkEdgeTpu():
     """DualNetwork implementation for Google's EdgeTPU."""
 
     def __init__(self, save_file):
-        self.engine = BasicEngine(save_file)
+
+        # self.engine = BasicEngine(save_file)
+
+        self.interpreter = make_interpreter(save_file)
+        self.interpreter.allocate_tensors()
+
         self.board_size = go.N
         self.output_policy_size = self.board_size**2 + 1
-
-        input_tensor_shape = self.engine.get_input_tensor_shape()
-        expected_input_shape = [1, self.board_size, self.board_size, 17]
-        if not np.array_equal(input_tensor_shape, expected_input_shape):
-            raise RuntimeError(
-                'Invalid input tensor shape {}. Expected: {}'.format(
-                    input_tensor_shape, expected_input_shape))
-        output_tensors_sizes = self.engine.get_all_output_tensors_sizes()
-        expected_output_tensor_sizes = [self.output_policy_size, 1]
-        if not np.array_equal(output_tensors_sizes,
-                              expected_output_tensor_sizes):
-            raise RuntimeError(
-                'Invalid output tensor sizes {}. Expected: {}'.format(
-                    output_tensors_sizes, expected_output_tensor_sizes))
-
-    def run(self, position):
-        """Runs inference on a single position."""
-        probs, values = self.run_many([position])
-        return probs[0], values[0]
 
     def run_many(self, positions):
         """Runs inference on a list of position."""
@@ -61,13 +51,26 @@ class DualNetworkEdgeTpu():
         probabilities = []
         values = []
         for state in processed:
-            assert state.shape == (self.board_size, self.board_size,
-                                   17), str(state.shape)
-            result = self.engine.RunInference(state.flatten())
-            # If needed you can get the raw inference time from the result object.
-            # inference_time = result[0] # ms
-            policy_output = result[1][0:self.output_policy_size]
-            value_output = result[1][-1]
+            assert state.shape == (self.board_size, self.board_size, 17)
+
+            run_inference(self.interpreter, state.flatten())
+
+            policy_scale = self.interpreter.get_output_details()[
+                0]['quantization'][0]
+            value_scale = self.interpreter.get_output_details()[
+                1]['quantization'][0]
+
+            policy_zero = self.interpreter.get_output_details()[
+                0]['quantization'][1]
+            value_zero = self.interpreter.get_output_details()[
+                1]['quantization'][1]
+
+            policy_output = (common.output_tensor(self.interpreter, 0)[
+                             0] - policy_zero) * policy_scale
+            value_output = (common.output_tensor(self.interpreter, 1)[
+                            0] - value_zero) * value_scale
+
             probabilities.append(policy_output)
             values.append(value_output)
+
         return probabilities, values
