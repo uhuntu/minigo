@@ -39,3 +39,6 @@ minigui/static/*.js.map
 cluster/cgos/cgosGtp*
 
 .bazelrc
+
+estimator_working_dir
+outputs/models
