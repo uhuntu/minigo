@@ -30,6 +30,8 @@ import dual_net
 import preprocessing
 import utils
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
 # See www.moderndescartes.com/essays/shuffle_viz for discussion on sizing
 flags.DEFINE_integer('shuffle_buffer_size', 2000,
                      'Size of buffer used to shuffle train examples.')
@@ -171,7 +173,7 @@ class UpdateRatioSessionHook(tf.train.SessionRunHook):
 
 def train(*tf_records: "Records to train on"):
     """Train on examples."""
-    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
     estimator = dual_net.get_estimator()
 
     effective_batch_size = FLAGS.train_batch_size

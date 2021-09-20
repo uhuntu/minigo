@@ -43,6 +43,7 @@ import go
 import symmetries
 import minigo_model
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 flags.DEFINE_integer('train_batch_size', 256,
                      'Batch size to use for train/eval evaluation. For GPU '

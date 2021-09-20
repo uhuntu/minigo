@@ -19,13 +19,13 @@ python3 selfplay.py \
   --verbose 3 \
   --selfplay_dir=outputs/data/selfplay \
   --holdout_dir=outputs/data/holdout \
-  --sgf_dir=outputs/sgf > /dev/null 2>&1
+  --sgf_dir=outputs/sgf #> /dev/null 2>&1
 
 echo "Training................................."
 python3 train.py \
   outputs/data/selfplay/* \
   --work_dir=estimator_working_dir \
-  --export_path=$NEXT_MODEL > /dev/null 2>&1
+  --export_path=$NEXT_MODEL #> /dev/null 2>&1
 
 echo "Sleeping................................."
 sleep 10
